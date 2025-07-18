@@ -60,8 +60,11 @@ sudo systemctl enable --now node_exporter
 
 ```
 
-Check the Node Exporter status
-`sudo systemctl status node_exporter`
+- Check the Node Exporter status
+
+```bash
+sudo systemctl status node_exporter
+```
 
 ✅ 2. Install Docker (If not already installed)
 
