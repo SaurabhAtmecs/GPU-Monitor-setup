@@ -23,8 +23,11 @@ This guide explains how to set up GPU usage monitoring on a GPU-enabled host usi
   └── Grafana Dashboard (connects to Prometheus)
 
 ```
+
 ### 🧱 Setup Instructions
+
 ✅ 1. Install Node Exporter (System Metrics)
+
 ```bash
 # Download and extract
 wget https://github.com/prometheus/node_exporter/releases/download/v1.9.0/node_exporter-1.9.0.linux-amd64.tar.gz
@@ -57,7 +60,11 @@ sudo systemctl enable --now node_exporter
 
 ```
 
+Check the Node Exporter status
+`sudo systemctl status node_exporter`
+
 ✅ 2. Install Docker (If not already installed)
+
 ```bash
 sudo apt update
 sudo apt install -y docker.io
@@ -65,13 +72,24 @@ sudo usermod -aG docker $USER
 # Logout and log back in to apply group changes
 ```
 
-✅ 3. Install DCGM Exporter (GPU Metrics)
+Configure Docker runtime
+
 ```bash
-# Run DCGM exporter container
-docker run -d --gpus all --cap-add SYS_ADMIN --rm -p 9400:9400 nvcr.io/nvidia/k8s/dcgm-exporter:4.2.3-4.1.3-ubuntu22.04
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+
+```
+
+✅ 3. Install DCGM Exporter (GPU Metrics)
+
+Verify GPU Container Access
+
+```bash
+docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi
 ```
 
 Optional: Setup NVIDIA Container Toolkit (if required)
+
 ```bash
 # Add NVIDIA repo
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
@@ -82,19 +100,19 @@ curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-
 # Install NVIDIA container toolkit
 sudo apt update
 sudo apt install -y nvidia-container-toolkit
-
-# Configure Docker runtime
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
 ```
 
-Verify GPU Container Access
+Run Docker DCGM Exporter
+
 ```bash
-docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi
+# Run DCGM exporter container
+docker run -d --gpus all --cap-add SYS_ADMIN --rm -p 9400:9400 nvcr.io/nvidia/k8s/dcgm-exporter:4.2.3-4.1.3-ubuntu22.04
 ```
+
 
 ✅ 4. Run Prometheus in Docker
 Create a prometheus.yml file in your current directory:
+
 ```yaml
 global:
   scrape_interval: 15s
@@ -110,6 +128,7 @@ scrape_configs:
 ```
 
 Then run Prometheus:
+
 ```bash
 docker run -d --name=prometheus -p 9090:9090 \
   -v $PWD/prometheus.yml:/etc/prometheus/prometheus.yml \
@@ -119,6 +138,7 @@ docker run -d --name=prometheus -p 9090:9090 \
 ### Note: On macOS/Windows, replace 172.17.0.1 with host.docker.internal.
 
 ✅ 5. Install Grafana
+
 ```bash
 # Install prerequisites
 sudo apt-get install -y apt-transport-https software-properties-common wget
